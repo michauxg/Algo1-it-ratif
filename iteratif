@@ -1,0 +1,169 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <limits.h>
+
+#define Nmax 33
+
+void transformation(int bdep, char *nbreinit, int barr, char* resultat, bool *depassement) 
+{
+    unsigned long long basedecimale = 0;
+    int lengthinit = strlen(nbreinit);
+    long long mul = 1;
+    int digit = 0;
+    *depassement = false;
+
+    int k = lengthinit-1;
+    while (k >= 0) 
+    {
+        
+        char c = nbreinit[k];
+        if (c >= '0' && c <= '9') 
+        {
+            digit = c - '0';
+        } 
+        else if (c >= 'A' && c <= 'F') 
+        {
+            digit = 10 + c - 'A';
+        }
+        
+        if (basedecimale > LLONG_MAX - digit * mul) // vérifie si l'ajout de digit*m ne provoque pas un dépassement
+        {
+            *depassement = true;
+            k=0;
+        }
+        
+        basedecimale=basedecimale + digit * mul;
+        mul= mul*bdep;
+        k--;
+        
+    }
+   
+    int m = 0;
+    char base2a16[] = "0123456789ABCDEF";
+    while ((basedecimale > 0)||(m==0))
+    {
+        if (m >= Nmax)
+        {
+            *depassement = true;
+            basedecimale=0;
+        }
+
+        int reste = basedecimale % barr;
+        resultat[m] = base2a16[reste];
+        basedecimale= basedecimale/barr;
+        m++;
+    }
+
+    resultat[m] = '\0'; // fin de chaîne pour le résultat
+
+    d = 0;
+    while (d < m / 2) 
+    {
+        char temp = resultat[d];
+        resultat[d] = resultat[m - d - 1];
+        resultat[m - d - 1] = temp;
+        d=d+1;
+    }
+}
+
+
+int main() 
+{
+    int bdep, barr;
+    char nbreinit[Nmax];
+    char resultat[Nmax];
+    bool depassement = false;
+    bool estNegatif = false;
+    // Précondition 1: initialisation de nbreinit, bdep, barr
+    printf("Encodez la base de départ, de 2 à 16 : ");
+    scanf("%d", &bdep);
+    printf("Encodez le nombre entier à convertir : ");
+    scanf("%s", nbreinit);
+    printf("Encodez la base d'arrivée, de 2 à 16 : ");
+    scanf("%d", &barr);
+    // Précondition 2: les bases doivent être valides
+    if (bdep < 2 || bdep > 16 || barr < 2 || barr > 16) 
+    {
+        printf("\nRaté, la base de départ et d'arrivée devaient être de 2 à 16.\n");
+        return 1;
+    }
+
+    // Précondition 3. Vérification si nbreinit ne provoque pas un dépassement
+    int length = strlen(nbreinit);
+    if (length >= Nmax) 
+    {
+        printf("Erreur : le nombre est trop long.\n");
+        return 1;
+    }
+    // Si nbreinit est négatif, on garde la valeur absolue, on réinjectera - dans la chaine resultat finale
+   if (nbreinit[0] == '-') 
+   {
+        estNegatif = true;
+        memmove(nbreinit, nbreinit + 1, strlen(nbreinit)); // Décale la chaîne d'un caractère vers la gauche
+        length = strlen(nbreinit);// On recalcule la longueur de la chaine car elle a diminué de 1 (enlevé -)
+
+    }
+
+// précondition 4. nbreinit doit contenir des caractères valides et la valeur de chaque caractère <bdep
+    for (int i = 0; i < length; i++) 
+    {
+        char c = nbreinit[i];
+        int valeur;
+        if (c <= '9') 
+        {
+            valeur = c - '0'; // Pour les chiffres de 0 à 9
+        } else 
+        {
+            valeur = c - 'A' + 10; // Pour les lettres de A à F
+        }
+
+        if (c < '0' || (c > '9' && c < 'A') || c > 'F' || valeur >= bdep) 
+        {
+            printf("Erreur : le nombre initial n'est pas compatible avec la base de départ.\n");
+            return 1;
+        }
+    }
+
+    // Appeler la fonction de transformation après la validation
+    transformation(bdep, nbreinit, barr, resultat, &depassement);
+
+    if (depassement) 
+    {
+        printf("Il y a eu un dépassement lors de la conversion.\n");
+    } else 
+    {
+    // Ajouter le signe '-' si le nombre est négatif
+        if (estNegatif) 
+        {
+            int len = strlen(resultat);
+            if (len < Nmax - 1) 
+            { // Assurez-vous d'avoir de la place pour le signe '-'
+            for (int j = len; j >= 0; j--) 
+            { // Décalez les caractères
+                resultat[j + 1] = resultat[j];
+            }
+            resultat[0] = '-'; // Ajoutez le signe '-'
+            } else 
+            {
+            printf("Erreur : pas assez de place pour le signe négatif.\n");
+            return 1;
+            }
+        }
+    printf("Le nombre %s%s en base %d est %s en base %d.\n",
+               estNegatif ? "-" : "",
+               nbreinit,
+               bdep,
+               resultat,
+               barr);
+    }
+}
+
+
+
+
+
+
+
+
